@@ -18,6 +18,8 @@ pipeline {
             }
         }
         stage('check'){
+            steps{
             sh 'curl http://localhost:3001'
+            }
     }
 }
