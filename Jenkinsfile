@@ -3,12 +3,14 @@ pipeline {
 
     environment {
         APP_PORT = "3001"
+        IMAGE_NAME = "charan30/python-demo-app"
+        TAG = "${BUILD_NUMBER}"  // You can also use "latest" or a Git SHA
     }
 
     stages {
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t myapp:latest .'
+                sh 'docker build -t $IMAGE_NAME:$TAG .'
             }
         }
 
@@ -18,7 +20,7 @@ pipeline {
                     steps {
                         sh '''
                             docker rm -f myapp || true
-                            docker run -d --name myapp -p 3001:3001 myapp:latest
+                            docker run -d --name myapp -p $APP_PORT:$APP_PORT $IMAGE_NAME:$TAG
 
                             echo "Waiting for app to start..."
                             for i in {1..10}; do
@@ -37,12 +39,22 @@ pipeline {
 
                 stage('Run Tests') {
                     steps {
-                        // Ensure dependencies are available in Jenkins environment
                         sh '''
                             pip install --user -r requirements.txt
                             pytest test_app.py
                         '''
                     }
+                }
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push $IMAGE_NAME:$TAG
+                    '''
                 }
             }
         }
