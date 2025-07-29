@@ -8,19 +8,33 @@ pipeline {
             }
         }
 
-        stage('Start App and Test') {
+        stage('Run App') {
             steps {
                 sh '''
                     nohup python3 app.py > app.log 2>&1 &
-                    sleep 5  # wait for the app to start
+                    echo $! > app.pid
+                    disown
+                '''
+            }
+        }
+
+        stage('Test App') {
+            steps {
+                sh '''
+                    sleep 5  # Give app time to start
                     curl http://localhost:3001
                 '''
             }
         }
-        stage('check'){
-            steps{
-            sh 'curl http://localhost:3001'
-            }
+    }
+
+    post {
+        always {
+            sh '''
+                if [ -f app.pid ]; then
+                    kill $(cat app.pid) || true
+                fi
+            '''
         }
     }
 }
