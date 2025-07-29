@@ -1,5 +1,9 @@
 pipeline {
     agent any
+    environment{
+        APP_PORT = "3001"
+    }
+    
 
     stages {
         stage('Build Docker Image') {
@@ -14,7 +18,7 @@ pipeline {
                     docker rm -f myapp || true
                     docker run -d --name myapp -p 3001:3001 myapp:latest
                     sleep 5
-                    curl http://localhost:3001
+                    curl http://localhost:$APP_PORT
                 '''
             }
         }
