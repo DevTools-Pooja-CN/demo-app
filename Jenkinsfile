@@ -17,5 +17,7 @@ pipeline {
                 '''
             }
         }
+        stage('check'){
+            sh 'curl http://localhost:3001'
     }
 }
