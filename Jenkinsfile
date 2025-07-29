@@ -10,8 +10,9 @@ pipeline {
 
         stage('VApp is Running') {
             steps {
-               sh 'python3 app.py &'
-               curl 'http://localhost:3001'
+               sh ''' python3 app.py &
+               curl http://localhost:3001
+               ''''
             }
         }
     }
