@@ -51,7 +51,6 @@ pipeline {
     post {
         always {
             echo "Cleaning up..."
-            sh 'docker rm -f myapp || true'
         }
     }
 }
