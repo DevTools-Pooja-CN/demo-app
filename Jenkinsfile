@@ -21,5 +21,6 @@ pipeline {
             steps{
             sh 'curl http://localhost:3001'
             }
+        }
     }
 }
