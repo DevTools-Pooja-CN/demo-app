@@ -10,32 +10,60 @@ WELCOME_HTML = '''
     <title>Welcome to Jenkins-Python App</title>
     <style>
         body {
-            background: linear-gradient(135deg, #1abc9c, #3498db);
+            margin: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1abc9c, #3498db);
             color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 20px;
             text-align: center;
-            padding-top: 100px;
+            font-size: 2em;
+            font-weight: bold;
         }
-        h1 {
-            font-size: 3em;
-            margin-bottom: 0.2em;
+
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        p {
-            font-size: 1.2em;
-        }
+
         .card {
             background-color: rgba(255, 255, 255, 0.1);
-            padding: 30px;
+            padding: 40px;
             border-radius: 15px;
-            display: inline-block;
+            text-align: center;
+        }
+
+        footer {
+            background-color: rgba(0, 0, 0, 0.2);
+            text-align: center;
+            padding: 15px;
+            font-size: 0.9em;
         }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>🚀 Hello from Jenkins Pipeline!</h1>
-        <p>This Python Flask app was deployed using Jenkins.</p>
-    </div>
+    <header>
+        🔧 Jenkins Python App
+    </header>
+
+    <main>
+        <div class="card">
+            <h1>🚀 Welcome!</h1>
+            <p>This Flask app was deployed using a Jenkins pipeline.</p>
+        </div>
+    </main>
+
+    <footer>
+        &copy; 2025 Charan DevOps · Powered by Flask & Jenkins
+    </footer>
 </body>
 </html>
 '''
