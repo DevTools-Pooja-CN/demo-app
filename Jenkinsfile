@@ -56,9 +56,31 @@ pipeline {
             }
         }
 
+        stage('Approval to Push') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    def userInput = input message: 'Do you want to push the image to Docker Hub?', ok: 'Continue',
+                        parameters: [choice(name: 'Push', choices: ['Yes', 'No'], description: 'Select Yes to proceed')]
+
+                    if (userInput == 'No') {
+                        echo "Skipping Docker Hub push as per user input."
+                        env.SKIP_PUSH = "true"
+                    } else {
+                        env.SKIP_PUSH = "false"
+                    }
+                }
+            }
+        }
+
         stage('Push to Docker Hub') {
             when {
-                branch 'main'  // Only push image if on 'main' branch
+                allOf {
+                    branch 'main'
+                    expression { return env.SKIP_PUSH != "true" }
+                }
             }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
