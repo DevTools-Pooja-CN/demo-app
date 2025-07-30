@@ -34,7 +34,7 @@ pipeline {
         withSonarQubeEnv('SonarCloud') {
             withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')]) {
                 sh '''
-                    sonar-scanner \
+                    /opt/sonar-scanner/bin/sonar-scanner \
                       -Dsonar.projectKey=CGO-22_demo-app \
                       -Dsonar.organization=cgo-22 \
                       -Dsonar.sources=. \
@@ -45,6 +45,7 @@ pipeline {
         }
     }
 }
+
 
 
         stage('Deploy and Smoke Test') {
