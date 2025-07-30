@@ -71,29 +71,9 @@ pipeline {
             }
         }
 
-        stage('Approval to Push') {
-            steps {
-                script {
-                    def userInput = input message: 'Do you want to push the image to JFrog Artifactory?', ok: 'Continue',
-                        parameters: [choice(name: 'Push', choices: ['Yes', 'No'], description: 'Select Yes to proceed')]
-
-                    if (userInput == 'No') {
-                        echo "Skipping JFrog push as per user input."
-                        env.SKIP_PUSH = "true"
-                    } else {
-                        env.SKIP_PUSH = "false"
-                    }
-                }
-            }
-        }
+       
 
         stage('Push to JFrog Artifactory') {
-            when {
-                allOf {
-                    branch 'main'
-                    expression { return env.SKIP_PUSH != "true" }
-                }
-            }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'jfrog-creds', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')]) {
                     timeout(time: 2, unit: 'MINUTES') {
