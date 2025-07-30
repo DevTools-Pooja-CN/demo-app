@@ -32,21 +32,21 @@ pipeline {
         }
 
         stage('Code Quality - SonarCloud') {
-            steps {
-                withSonarQubeEnv('SonarCloud') {
-                    withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')]) {
-                        sh '''
-                            sonar-scanner \
-                              -Dsonar.projectKey=CGO-22_demo-app \
-                              -Dsonar.organization=cgo-22 \
-                              -Dsonar.sources=. \
-                              -Dsonar.host.url=https://sonarcloud.io \
-                              -Dsonar.login=$SONAR_TOKEN
-                        '''
-                    }
-                }
+    steps {
+        withSonarQubeEnv('SonarCloud') {
+            withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')]) {
+                sh '''
+                    /opt/sonar-scanner/bin/sonar-scanner \
+                      -Dsonar.projectKey=CGO-22_demo-app \
+                      -Dsonar.organization=cgo-22 \
+                      -Dsonar.sources=. \
+                      -Dsonar.host.url=https://sonarcloud.io \
+                      -Dsonar.login=$SONAR_TOKEN
+                '''
             }
         }
+    }
+}
 
         stage('Deploy and Smoke Test') {
             steps {
