@@ -76,9 +76,15 @@ pipeline {
     post {
         success {
             echo "🎉 Build and deployment successful!"
+            mail to: 'charanv@devtools.in',
+             subject: "Jenkins Build Sucess: ${env.JOB_NAME} [#${env.BUILD_NUMBER}]",
+             body: "The build Sucess. Check details at: ${env.BUILD_URL}"
         }
         failure {
             echo "❌ Build or test failed."
+            mail to: 'charanv@devtools.in',
+             subject: "Jenkins Build Failed: ${env.JOB_NAME} [#${env.BUILD_NUMBER}]",
+             body: "The build failed. Check details at: ${env.BUILD_URL}"
         }
     }
 }
