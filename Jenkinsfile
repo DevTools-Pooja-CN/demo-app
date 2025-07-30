@@ -75,7 +75,7 @@ pipeline {
 
         stage('Push to JFrog Artifactory') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'jfrog-creds', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'jfrog-cred', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')]) {
                     timeout(time: 2, unit: 'MINUTES') {
                         sh '''
                             echo "$JFROG_PASS" | docker login $JFROG_REGISTRY -u "$JFROG_USER" --password-stdin
