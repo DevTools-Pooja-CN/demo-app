@@ -30,6 +30,9 @@ pipeline {
         }
 
         stage('Code Quality - SonarCloud') {
+             tools {
+                    sonarQube 'SonarScanner'
+            }
             steps {
                 withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')]) {
                     sh '''
