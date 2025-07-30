@@ -18,40 +18,51 @@ pipeline {
             }
         }
 
-        stage('Deploy and Test') {
-            parallel {
-                stage('Deploy Container') {
-                    steps {
-                        timeout(time: 3, unit: 'MINUTES') {
-                            sh '''
-                                docker rm -f myapp || true
-                                docker run -d --name myapp -p $APP_PORT:$APP_PORT $IMAGE_NAME:$TAG
-
-                                echo "Waiting for app to start..."
-                                for i in {1..10}; do
-                                    if curl --silent http://localhost:$APP_PORT; then
-                                        echo "App is up"
-                                        break
-                                    fi
-                                    echo "Waiting... ($i)"
-                                    sleep 1
-                                done
-
-                                curl --fail http://localhost:$APP_PORT
-                            '''
-                        }
-                    }
+        stage('Run Unit Tests') {
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
+                    sh '''
+                        pip install --user -r requirements.txt
+                        pytest test_app.py
+                    '''
                 }
+            }
+        }
 
-                stage('Run Tests') {
-                    steps {
-                        timeout(time: 2, unit: 'MINUTES') {
-                            sh '''
-                                pip install --user -r requirements.txt
-                                pytest test_app.py
-                            '''
-                        }
-                    }
+        stage('Code Quality - SonarCloud') {
+            steps {
+                withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')]) {
+                    sh '''
+                        sonar-scanner \
+                          -Dsonar.projectKey=CGO-22_demo-app \
+                          -Dsonar.organization=cgo-22 \
+                          -Dsonar.sources=. \
+                          -Dsonar.host.url=https://sonarcloud.io \
+                          -Dsonar.login=$SONAR_TOKEN
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy and Smoke Test') {
+            steps {
+                timeout(time: 3, unit: 'MINUTES') {
+                    sh '''
+                        docker rm -f myapp || true
+                        docker run -d --name myapp -p $APP_PORT:$APP_PORT $IMAGE_NAME:$TAG
+
+                        echo "Waiting for app to start..."
+                        for i in {1..10}; do
+                            if curl --silent http://localhost:$APP_PORT; then
+                                echo "App is up"
+                                break
+                            fi
+                            echo "Waiting... ($i)"
+                            sleep 1
+                        done
+
+                        curl --fail http://localhost:$APP_PORT
+                    '''
                 }
             }
         }
@@ -94,7 +105,7 @@ pipeline {
 
     post {
         success {
-            echo "🎉 Build and deployment successful!"
+            echo "🎉 Build, test, and deployment successful!"
         }
         failure {
             echo "❌ Build or test failed."
