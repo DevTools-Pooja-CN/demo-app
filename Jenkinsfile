@@ -3,7 +3,9 @@ pipeline {
 
     environment {
         APP_PORT = "3001"
-        IMAGE_NAME = "charan30/python-demo-app"
+        JFROG_REGISTRY = "trialsnmz2e.jfrog.io"
+        JFROG_REPO = "python-demo-app"
+        IMAGE_NAME = "${JFROG_REGISTRY}/${JFROG_REPO}/python-demo"
         TAG = "${BUILD_NUMBER}"
     }
 
@@ -29,24 +31,22 @@ pipeline {
             }
         }
 
-       stage('Code Quality - SonarCloud') {
-    steps {
-        withSonarQubeEnv('SonarCloud') {
-            withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')]) {
-                sh '''
-                    /opt/sonar-scanner/bin/sonar-scanner \
-                      -Dsonar.projectKey=CGO-22_demo-app \
-                      -Dsonar.organization=cgo-22 \
-                      -Dsonar.sources=. \
-                      -Dsonar.host.url=https://sonarcloud.io \
-                      -Dsonar.login=$SONAR_TOKEN
-                '''
+        stage('Code Quality - SonarCloud') {
+            steps {
+                withSonarQubeEnv('SonarCloud') {
+                    withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')]) {
+                        sh '''
+                            sonar-scanner \
+                              -Dsonar.projectKey=CGO-22_demo-app \
+                              -Dsonar.organization=cgo-22 \
+                              -Dsonar.sources=. \
+                              -Dsonar.host.url=https://sonarcloud.io \
+                              -Dsonar.login=$SONAR_TOKEN
+                        '''
+                    }
+                }
             }
         }
-    }
-}
-
-
 
         stage('Deploy and Smoke Test') {
             steps {
@@ -74,11 +74,11 @@ pipeline {
         stage('Approval to Push') {
             steps {
                 script {
-                    def userInput = input message: 'Do you want to push the image to Docker Hub?', ok: 'Continue',
+                    def userInput = input message: 'Do you want to push the image to JFrog Artifactory?', ok: 'Continue',
                         parameters: [choice(name: 'Push', choices: ['Yes', 'No'], description: 'Select Yes to proceed')]
 
                     if (userInput == 'No') {
-                        echo "Skipping Docker Hub push as per user input."
+                        echo "Skipping JFrog push as per user input."
                         env.SKIP_PUSH = "true"
                     } else {
                         env.SKIP_PUSH = "false"
@@ -87,7 +87,7 @@ pipeline {
             }
         }
 
-        stage('Push to Docker Hub') {
+        stage('Push to JFrog Artifactory') {
             when {
                 allOf {
                     branch 'main'
@@ -95,10 +95,10 @@ pipeline {
                 }
             }
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: 'jfrog-creds', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')]) {
                     timeout(time: 2, unit: 'MINUTES') {
                         sh '''
-                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                            echo "$JFROG_PASS" | docker login $JFROG_REGISTRY -u "$JFROG_USER" --password-stdin
                             docker push $IMAGE_NAME:$TAG
                         '''
                     }
