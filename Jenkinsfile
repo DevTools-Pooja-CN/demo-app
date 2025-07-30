@@ -57,9 +57,6 @@ pipeline {
         }
 
         stage('Approval to Push') {
-            when {
-                branch 'main'
-            }
             steps {
                 script {
                     def userInput = input message: 'Do you want to push the image to Docker Hub?', ok: 'Continue',
