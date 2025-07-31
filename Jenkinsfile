@@ -81,7 +81,9 @@ pipeline {
             }
         }
 
-        stage('Push to JFrog Artifactory') {
+        stage('Publish Artifacts to JFrog') {
+    parallel {
+        stage('Push Docker Image') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'jfrog-cred', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')]) {
                     timeout(time: 2, unit: 'MINUTES') {
@@ -94,7 +96,7 @@ pipeline {
             }
         }
 
-        stage('Publish Coverage Report to JFrog') {
+        stage('Upload Coverage Report') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'jfrog-cred', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')]) {
                     sh '''
@@ -105,6 +107,9 @@ pipeline {
                 }
             }
         }
+    }
+}
+
     }
 
     post {
