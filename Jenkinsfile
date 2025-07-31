@@ -29,10 +29,10 @@ pipeline {
                         timeout(time: 3, unit: 'MINUTES') {
                             sh '''
                             export PATH=$PATH:/var/lib/jenkins/.local/bin
-                             rm -f .coverage coverage.xml
-                            coverage run --source=app -m pytest test_app.py
-                            coverage report
-                            coverage xml -o coverage.xml
+                            rm -f .coverage .coverage-data coverage.xml
+                            coverage run --data-file=.coverage-data --source=app -m pytest test_app.py
+                            coverage report --data-file=.coverage-data
+                            coverage xml --data-file=.coverage-data -o coverage.xml
                             '''
                         }
                     }
