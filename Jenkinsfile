@@ -31,13 +31,10 @@ pipeline {
                             export PATH=$PATH:/var/lib/jenkins/.local/bin
                             pip install --user -r requirements.txt
                             pip install --user coverage
-                        
-                            rm -f coverage.xml .coverage
-                        
-                            # Run tests with coverage
-                            coverage run --source=app -m pytest test_app.py
-                        
-                            # Generate XML coverage report
+                            
+                            rm -f .coverage coverage.xml
+                            
+                            coverage run --source=. -m pytest test_app.py
                             coverage xml -o coverage.xml --data-file .coverage
                             '''
                         }
