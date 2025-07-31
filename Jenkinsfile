@@ -29,7 +29,8 @@ pipeline {
                         timeout(time: 3, unit: 'MINUTES') {
                             sh '''
                                 pip install --user -r requirements.txt
-                                pip install coverage
+                                pip install --user coverage
+                                export PATH=$PATH:/var/lib/jenkins/.local/bin
                                 coverage run -m pytest test_app.py
                                 coverage xml -o coverage.xml
                             '''
