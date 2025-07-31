@@ -7,6 +7,8 @@ pipeline {
         JFROG_REPO = "python-demo-app"
         IMAGE_NAME = "${JFROG_REGISTRY}/${JFROG_REPO}/python-demo"
         TAG = "${BUILD_NUMBER}"
+        COVERAGE_FILE = "coverage.xml"
+        COVERAGE_ARTIFACT_PATH = "coverage/coverage-${BUILD_NUMBER}.xml"
     }
 
     stages {
@@ -20,33 +22,40 @@ pipeline {
             }
         }
 
-        stage('Run Unit Tests') {
-            steps {
-                timeout(time: 2, unit: 'MINUTES') {
-                    sh '''
-                        pip install --user -r requirements.txt
-                        pytest test_app.py
-                    '''
+        stage('Parallel: Unit Tests & Code Quality') {
+            parallel {
+                stage('Run Unit Tests + Coverage') {
+                    steps {
+                        timeout(time: 3, unit: 'MINUTES') {
+                            sh '''
+                                pip install --user -r requirements.txt
+                                pip install coverage
+                                coverage run -m pytest test_app.py
+                                coverage xml -o coverage.xml
+                            '''
+                        }
+                    }
+                }
+
+                stage('Code Quality - SonarCloud') {
+                    steps {
+                        withSonarQubeEnv('SonarCloud') {
+                            withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')]) {
+                                sh '''
+                                    /opt/sonar-scanner/bin/sonar-scanner \
+                                      -Dsonar.projectKey=CGO-22_demo-app \
+                                      -Dsonar.organization=cgo-22 \
+                                      -Dsonar.sources=. \
+                                      -Dsonar.host.url=https://sonarcloud.io \
+                                      -Dsonar.login=$SONAR_TOKEN \
+                                      -Dsonar.python.coverage.reportPaths=coverage.xml
+                                '''
+                            }
+                        }
+                    }
                 }
             }
         }
-
-        stage('Code Quality - SonarCloud') {
-    steps {
-        withSonarQubeEnv('SonarCloud') {
-            withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')]) {
-                sh '''
-                    /opt/sonar-scanner/bin/sonar-scanner \
-                      -Dsonar.projectKey=CGO-22_demo-app \
-                      -Dsonar.organization=cgo-22 \
-                      -Dsonar.sources=. \
-                      -Dsonar.host.url=https://sonarcloud.io \
-                      -Dsonar.login=$SONAR_TOKEN
-                '''
-            }
-        }
-    }
-}
 
         stage('Deploy and Smoke Test') {
             steps {
@@ -71,8 +80,6 @@ pipeline {
             }
         }
 
-       
-
         stage('Push to JFrog Artifactory') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'jfrog-cred', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')]) {
@@ -82,6 +89,18 @@ pipeline {
                             docker push $IMAGE_NAME:$TAG
                         '''
                     }
+                }
+            }
+        }
+
+        stage('Publish Coverage Report to JFrog') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'jfrog-cred', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')]) {
+                    sh '''
+                        curl -u "$JFROG_USER:$JFROG_PASS" \
+                          -T coverage.xml \
+                          "https://$JFROG_REGISTRY/artifactory/$JFROG_REPO/$COVERAGE_ARTIFACT_PATH"
+                    '''
                 }
             }
         }
