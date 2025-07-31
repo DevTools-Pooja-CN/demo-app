@@ -28,18 +28,17 @@ pipeline {
                     steps {
                         timeout(time: 3, unit: 'MINUTES') {
                             sh '''
-                                    pip install --user -r requirements.txt
-                                    pip install --user coverage
-                                    export PATH=$PATH:/var/lib/jenkins/.local/bin
-                    
-                                    # remove old files
-                                    rm -f coverage.xml .coverage
-                    
-                                    # run tests with coverage
-                                    coverage run -m pytest test_app.py
-                    
-                                    # generate coverage.xml
-                                    coverage xml -o coverage.xml --data-file .coverage
+                            export PATH=$PATH:/var/lib/jenkins/.local/bin
+                            pip install --user -r requirements.txt
+                            pip install --user coverage
+                        
+                            rm -f coverage.xml .coverage
+                        
+                            # Run tests with coverage
+                            coverage run --source=app -m pytest test_app.py
+                        
+                            # Generate XML coverage report
+                            coverage xml -o coverage.xml --data-file .coverage
                             '''
                         }
                     }
