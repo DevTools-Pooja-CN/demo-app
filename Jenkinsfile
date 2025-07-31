@@ -29,13 +29,10 @@ pipeline {
                         timeout(time: 3, unit: 'MINUTES') {
                             sh '''
                             export PATH=$PATH:/var/lib/jenkins/.local/bin
-                            pip install --user -r requirements.txt
-                            pip install --user coverage
-                            
-                            rm -f .coverage coverage.xml
-                            
-                            coverage run --source=. -m pytest test_app.py
-                            coverage xml -o coverage.xml --data-file .coverage
+                             rm -f .coverage coverage.xml
+                            coverage run --source=app -m pytest test_app.py
+                            coverage report
+                            coverage xml -o coverage.xml
                             '''
                         }
                     }
