@@ -12,12 +12,13 @@ spec:
       labels:
         app: python-demo
     spec:
-      automountServiceAccountToken: false  # Disable service account token mounting
+      serviceAccountName: python-demo-sa
+      automountServiceAccountToken: false
       imagePullSecrets:
         - name: jfrog-registry-secret
       containers:
         - name: python-demo
-          image: IMAGE_PLACEHOLDER
+          image: python-demo:v1.0.0  # 🔐 Specific image tag
           ports:
             - containerPort: 3001
           resources:
@@ -27,3 +28,9 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "250m"
+          volumeMounts:
+            - name: app-storage
+              mountPath: /app/data
+      volumes:
+        - name: app-storage
+          emptyDir: {}  # Or use `persistentVolumeClaim` if needed
