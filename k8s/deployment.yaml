@@ -28,6 +28,11 @@ spec:
             limits:
               memory: "256Mi"
               cpu: "250m"
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
           volumeMounts:
             - name: app-storage
               mountPath: /app/data
