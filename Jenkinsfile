@@ -105,6 +105,8 @@ pipeline {
         
                         # Smoke test via public URL (Nginx exposed)
                         echo "Testing http://20.109.16.207:32256/"
+
+                        sleep 10
                         curl --fail http://20.109.16.207:32256/
                     '''
                 }
