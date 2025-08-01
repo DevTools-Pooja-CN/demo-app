@@ -1,5 +1,5 @@
-flask
-pytest
-coverage
-requests
-flask-wtf
+flask==3.0.3
+pytest==8.2.2
+coverage==7.5.3
+requests==2.32.3
+flask-wtf==1.2.1
