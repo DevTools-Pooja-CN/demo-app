@@ -2,7 +2,7 @@ from flask import Flask, render_template_string
 from flask_wtf import CSRFProtect
 
 app = Flask(__name__)
-app.secret_key = 'a-very-secret-key'  # Required for CSRF (should be kept safe in production)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "fallback-secret")  # Required for CSRF (should be kept safe in production)
 
 # Enable CSRF protection
 csrf = CSRFProtect(app)
