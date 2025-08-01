@@ -12,6 +12,11 @@ pipeline {
     }
 
     stages {
+          stage('Install Python Dependencies') {
+            steps {
+                sh 'pip install -r requirements.txt'
+            }
+        }
         stage('Build Docker Image') {
             steps {
                 timeout(time: 5, unit: 'MINUTES') {
