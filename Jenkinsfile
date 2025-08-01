@@ -58,30 +58,7 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes (Minikube) & Smoke Test') {
-            steps {
-                timeout(time: 4, unit: 'MINUTES') {
-                    sh '''
-                        # Replace image in deployment YAML
-                        sed "s|IMAGE_PLACEHOLDER|$IMAGE_NAME:$TAG|g" k8s/deployment.yaml > k8s/deploy-temp.yaml
-
-                        # Apply deployment
-                        kubectl apply -f k8s/deploy-temp.yaml
-
-                        # Wait for rollout to finish
-                        kubectl rollout status deployment/python-demo
-
-                        # Smoke test
-                        NODE_PORT=$(kubectl get svc python-demo --output=jsonpath='{.spec.ports[0].nodePort}')
-                        minikube_ip=$(minikube ip)
-                        echo "Testing http://$minikube_ip:$NODE_PORT"
-                        curl --fail http://$minikube_ip:$NODE_PORT
-                    '''
-                }
-            }
-        }
-
-        stage('Publish Artifacts to JFrog') {
+          stage('Publish Artifacts to JFrog') {
             parallel {
                 stage('Push Docker Image') {
                     steps {
@@ -109,6 +86,31 @@ pipeline {
                 }
             }
         }
+        
+        stage('Deploy to Kubernetes (Minikube) & Smoke Test') {
+            steps {
+                timeout(time: 4, unit: 'MINUTES') {
+                    sh '''
+                        # Replace image in deployment YAML
+                        sed "s|IMAGE_PLACEHOLDER|$IMAGE_NAME:$TAG|g" k8s/deployment.yaml > k8s/deploy-temp.yaml
+
+                        # Apply deployment
+                        kubectl apply -f k8s/deploy-temp.yaml
+
+                        # Wait for rollout to finish
+                        kubectl rollout status deployment/python-demo
+
+                        # Smoke test
+                        NODE_PORT=$(kubectl get svc python-demo --output=jsonpath='{.spec.ports[0].nodePort}')
+                        minikube_ip=$(minikube ip)
+                        echo "Testing http://$minikube_ip:$NODE_PORT"
+                        curl --fail http://$minikube_ip:$NODE_PORT
+                    '''
+                }
+            }
+        }
+
+      
     }
 
     post {
