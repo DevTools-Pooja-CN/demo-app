@@ -91,20 +91,23 @@ pipeline {
             steps {
                 timeout(time: 4, unit: 'MINUTES') {
                     sh '''
-                        # Replace image in deployment YAML
-                        sed "s|IMAGE_PLACEHOLDER|$IMAGE_NAME:$TAG|g" k8s/deployment.yaml > k8s/deploy-temp.yaml
-
-                        # Apply deployment
-                        kubectl apply -f k8s/deploy-temp.yaml
-
-                        # Wait for rollout to finish
-                        kubectl rollout status deployment/python-demo
-
-                        # Smoke test
-                        NODE_PORT=$(kubectl get svc python-demo --output=jsonpath='{.spec.ports[0].nodePort}')
-                        minikube_ip=$(minikube ip)
-                        echo "Testing http://$minikube_ip:$NODE_PORT"
-                        curl --fail http://$minikube_ip:$NODE_PORT
+                            # Replace image in deployment YAML
+                            sed "s|IMAGE_PLACEHOLDER|$IMAGE_NAME:$TAG|g" k8s/deployment.yaml > k8s/deploy-temp.yaml
+            
+                            # Apply deployment
+                            kubectl apply -f k8s/deploy-temp.yaml
+            
+                            # Force restart in case same tag used
+                            kubectl rollout restart deployment/python-demo
+            
+                            # Wait for rollout to finish
+                            kubectl rollout status deployment/python-demo
+            
+                            # Smoke test
+                            NODE_PORT=$(kubectl get svc python-demo --output=jsonpath='{.spec.ports[0].nodePort}')
+                            minikube_ip=$(minikube ip)
+                            echo "Testing http://$minikube_ip:$NODE_PORT"
+                            curl --fail http://$minikube_ip:$NODE_PORT
                     '''
                 }
             }
