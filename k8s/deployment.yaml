@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: python-demo
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: python-demo
@@ -12,8 +12,10 @@ spec:
       labels:
         app: python-demo
     spec:
+      imagePullSecrets:
+        - name: jfrog-registry-secret
       containers:
-      - name: python-demo
-        image: IMAGE_PLACEHOLDER
-        ports:
-        - containerPort: 3001
+        - name: python-demo
+          image: trialsnmz2e.jfrog.io/python-demo-app/python-demo:<tag>
+          ports:
+            - containerPort: 3001
