@@ -1,10 +1,11 @@
 from flask import Flask, render_template_string
 from flask_wtf import CSRFProtect
+from prometheus_flask_exporter import PrometheusMetrics
 import os
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "fallback-secret")  # Required for CSRF (should be kept safe in production)
-
+metrics = PrometheusMetrics(app)
 # Enable CSRF protection
 csrf = CSRFProtect(app)
 
