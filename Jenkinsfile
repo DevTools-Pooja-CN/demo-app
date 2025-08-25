@@ -29,21 +29,20 @@ pipeline {
             }
         }
 
-        stage('Parallel: Unit Tests & Code Quality') {
-            parallel {
-                stage('Run Unit Tests + Coverage') {
+      stage('Parallel: Unit Tests & Code Quality') {
+                stage('Run Unit Tests') {
                     steps {
                         timeout(time: 3, unit: 'MINUTES') {
                             sh '''
                                 export PATH=$PATH:/var/lib/jenkins/.local/bin
-                                rm -f .coverage .coverage-data coverage.xml
-                                coverage run --data-file=.coverage-data --source=app -m pytest test_app.py
-                                coverage report --data-file=.coverage-data
-                                coverage xml --data-file=.coverage-data -o coverage.xml
+                                pytest test_app.py
                             '''
                         }
                     }
                 }
+                // Code Quality stage (like SonarCloud) can stay here if you still need it
+            }
+        }
 
                stage('SonarCloud Scan') {
                     steps {
@@ -60,7 +59,6 @@ pipeline {
                     }
                 }
             }
-        }
 
         stage('Publish Artifacts to JFrog') {
             parallel {
