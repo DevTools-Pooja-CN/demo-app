@@ -11,4 +11,4 @@ def test_home(client):
     assert response.status_code == 200
     assert b"Welcome!" in response.data
     assert b"Jenkins Python App" in response.data
-    assert b"Powered by Flask & Jenkins" in response.data
+    assert b"deployed using a Jenkins pipeline using docker" in response.data
