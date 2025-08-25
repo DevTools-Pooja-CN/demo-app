@@ -70,24 +70,18 @@ pipeline {
             }
         }
 
-        stage('Deploy to AKS') {
+        stage('Deploy') {
             steps {
-                withCredentials([file(credentialsId: 'aks-kubeconfig', variable: 'KUBECONFIG_FILE')]) {
-                    sh '''
-                        echo "Setting KUBECONFIG..."
-                        export KUBECONFIG=$KUBECONFIG_FILE
+                sh '''
+                    echo "Stopping and removing existing container (if any)..."
+                    docker rm -f python-demo-container || true
 
-                        echo "Replacing image placeholder..."
-                        sed "s|IMAGE_PLACEHOLDER|$IMAGE_NAME:$TAG|g" k8s/deployment.yaml > k8s/deploy-temp.yaml
+                    echo "Pulling the latest image..."
+                    docker pull $IMAGE_NAME:$TAG
 
-                        echo "Deploying to AKS..."
-                        kubectl apply -f k8s/deploy-temp.yaml
-                        kubectl apply -f k8s/service.yaml || true
-
-                        echo "Waiting for rollout to finish..."
-                        kubectl rollout status deployment/python-demo
-                    '''
-                }
+                    echo "Starting new container..."
+                    docker run -d -p 3001:3001 --name python-demo-container $IMAGE_NAME:$TAG
+                '''
             }
         }
 
