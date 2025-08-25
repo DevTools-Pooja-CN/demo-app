@@ -61,28 +61,36 @@ pipeline {
                 }
             }
         }
-        stage('Deploy to Azure Web App') {
-            steps {
-                withCredentials([file(credentialsId: 'azure-publish-profile', variable: 'PUBLISH_PROFILE')]) {
-                    sh '''
-                        # Install Azure CLI if not already installed, or ensure it's available
-
-                        echo "Logging into Azure Web App using publish profile..."
-                        az webapp deployment container config --name ${AZURE_WEBAPP_NAME} --resource-group ${AZURE_RESOURCE_GROUP} --enable-cd true
-
-                        echo "Setting container image from private registry..."
-                        az webapp config container set --name ${AZURE_WEBAPP_NAME} --resource-group ${AZURE_RESOURCE_GROUP} \\
-                            --docker-custom-image-name ${IMAGE_NAME}:${TAG} \\
-                            --docker-registry-server-url https://${JFROG_REGISTRY} \\
-                            --docker-registry-server-user $JFROG_USER \\
-                            --docker-registry-server-password $JFROG_PASS
-
-                        echo "Restarting Azure Web App..."
-                        az webapp restart --name ${AZURE_WEBAPP_NAME} --resource-group ${AZURE_RESOURCE_GROUP}
-                    '''
-                }
+        stage('Configure Azure Web App to use Docker Image') {
+          steps {
+            withCredentials([
+              string(credentialsId: 'publish-profile', variable: 'PUBLISH_PROFILE'),
+              usernamePassword(credentialsId: 'jfrog-cred', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')
+            ]) {
+              sh '''
+                echo "$PUBLISH_PROFILE" > publishProfile.xml
+                
+                # You can extract publishing credentials if needed, but az CLI commands below use SP or login
+                
+                # Enable continuous deployment (you already did this, so this can be optional)
+                az webapp deployment container config --name python-app1 --resource-group RG --enable-cd true
+                
+                # Configure Azure Web App to pull your custom image from JFrog
+                az webapp config container set \
+                  --name python-app1 \
+                  --resource-group RG \
+                  --docker-custom-image-name 130.131.164.192:8082/art-docker-local/python-demo:${BUILD_NUMBER} \
+                  --docker-registry-server-url https://130.131.164.192:8082 \
+                  --docker-registry-server-user $JFROG_USER \
+                  --docker-registry-server-password $JFROG_PASS
+                
+                # Restart the app to apply changes
+                az webapp restart --name python-app1 --resource-group RG
+              '''
             }
+          }
         }
+
     }
     post {
         always {
