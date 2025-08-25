@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         APP_PORT = "3001"
-        JFROG_REGISTRY = "trialsnmz2e.jfrog.io"
-        JFROG_REPO = "python-demo-app"
+        JFROG_REGISTRY = "http://130.131.164.192:8082/"
+        JFROG_REPO = "art-python-local"
         IMAGE_NAME = "${JFROG_REGISTRY}/${JFROG_REPO}/python-demo"
         TAG = "${BUILD_NUMBER}"
         COVERAGE_FILE = "coverage.xml"
@@ -46,7 +46,7 @@ pipeline {
                 stage('Code Quality - SonarCloud') {
                     steps {
                         withSonarQubeEnv('SonarCloud') {
-                            withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')]) {
+                            withCredentials([string(credentialsId: 'sonar-qube-token', variable: 'SONAR_TOKEN')]) {
                                 sh '''
                                     /opt/sonar-scanner/bin/sonar-scanner \
                                       -Dsonar.projectKey=CGO-22_demo-app \
