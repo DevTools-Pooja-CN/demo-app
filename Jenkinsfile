@@ -69,7 +69,7 @@ pipeline {
                 }
             }
         }
-
+/*
         stage('Deploy') {
             steps {
                 sh '''
@@ -84,7 +84,27 @@ pipeline {
                 '''
             }
         }
+*/
+    stage('Deploy to AKS') {
+            steps {
+                    sh '''
 
+                        echo "Replacing image placeholder..."
+                        sed "s|IMAGE_PLACEHOLDER|$IMAGE_NAME:$TAG|g" k8s/deployment.yaml > k8s/deploy-temp.yaml
+
+                        echo "Deploying to AKS..."
+                        kubectl apply -f k8s/deploy-temp.yaml
+                        kubectl apply -f k8s/service.yaml || true
+
+                        echo "Waiting for rollout to finish..."
+                        kubectl rollout status deployment/python-demo
+                    '''
+                }
+            }
+        }
+
+
+        
         stage('Smoke Test') {
             steps {
                 sh '''
