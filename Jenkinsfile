@@ -66,39 +66,42 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes & Smoke Test') {
+        stage('Deploy to AKS') {
             steps {
-                timeout(time: 4, unit: 'MINUTES') {
+                withCredentials([file(credentialsId: 'aks-kubeconfig', variable: 'KUBECONFIG_FILE')]) {
                     sh '''
-                        # Replace image in deployment YAML with the new tag
+                        export KUBECONFIG=$KUBECONFIG_FILE
+
+                        # Replace image placeholder in YAML
                         sed "s|IMAGE_PLACEHOLDER|$IMAGE_NAME:$TAG|g" k8s/deployment.yaml > k8s/deploy-temp.yaml
 
-                        # Apply deployment (keeps existing service/ingress unchanged)
+                        # Apply deployment
                         kubectl apply -f k8s/deploy-temp.yaml
 
-                        # Restart deployment if same tag is reused (optional but safe)
-                        kubectl rollout restart deployment/python-demo
-
-                        # Wait for rollout to complete
+                        # Wait for rollout
                         kubectl rollout status deployment/python-demo
-
-                        # Smoke test via public URL (Nginx exposed)
-                        echo "Testing http://20.109.16.207:32256/"
-
-                        sleep 10
-                        curl --fail http://20.109.16.207:32256/
                     '''
                 }
+            }
+        }
+
+        stage('Smoke Test') {
+            steps {
+                sh '''
+                    echo "Running smoke test..."
+                    sleep 10
+                    curl --fail http://<your-service-public-ip>:<port>/ || exit 1
+                '''
             }
         }
     }
 
     post {
         success {
-            echo "🎉 Build, test, and Kubernetes deployment successful!"
+            echo "✅ Deployed successfully to Azure AKS"
         }
         failure {
-            echo "❌ Something failed. Check logs."
+            echo "❌ Deployment failed"
         }
     }
 }
