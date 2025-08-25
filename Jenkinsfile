@@ -61,20 +61,19 @@ pipeline {
                 }
             }
         }
+
         stage('Configure Azure Web App to use Docker Image') {
           steps {
             withCredentials([
-              string(credentialsId: 'azure-publish-profile', variable: 'PUBLISH_PROFILE'),
+              file(credentialsId: 'azure-publish-profile', variable: 'PUBLISH_PROFILE'),
               usernamePassword(credentialsId: 'jfrog-cred', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')
             ]) {
               sh '''
-                echo "$PUBLISH_PROFILE" > publishProfile.xml
+                echo "Using Azure publish profile from file: $PUBLISH_PROFILE"
                 
-                # You can extract publishing credentials if needed, but az CLI commands below use SP or login
-                
-                # Enable continuous deployment (you already did this, so this can be optional)
+                # Enable continuous deployment (optional)
                 az webapp deployment container config --name python-app1 --resource-group RG --enable-cd true
-                
+        
                 # Configure Azure Web App to pull your custom image from JFrog
                 az webapp config container set \
                   --name python-app1 \
@@ -83,13 +82,14 @@ pipeline {
                   --docker-registry-server-url https://130.131.164.192:8082 \
                   --docker-registry-server-user $JFROG_USER \
                   --docker-registry-server-password $JFROG_PASS
-                
+        
                 # Restart the app to apply changes
                 az webapp restart --name python-app1 --resource-group RG
               '''
             }
           }
         }
+        
 
     }
     post {
