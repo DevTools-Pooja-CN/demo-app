@@ -69,9 +69,8 @@ pipeline {
                 }
             }
         }
-    }
-}
-    stage('Deploy to AKS') {
+
+        stage('Deploy to AKS') {
             steps {
                 withCredentials([file(credentialsId: 'aks-kubeconfig', variable: 'KUBECONFIG_FILE')]) {
                     sh '''
@@ -111,3 +110,4 @@ pipeline {
             echo "❌ Deployment failed"
         }
     }
+}
