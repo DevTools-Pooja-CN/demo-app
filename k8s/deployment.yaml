@@ -14,11 +14,9 @@ spec:
     spec:
       serviceAccountName: python-demo-sa
       automountServiceAccountToken: false
-      imagePullSecrets:
-        - name: jfrog-registry-secret
       containers:
         - name: python-demo
-          image: image: 130.131.164.192:8082/art-docker-local/python-demo:16
+          image: IMAGE_PLACEHOLDER
           ports:
             - containerPort: 3001
           resources:
@@ -40,4 +38,4 @@ spec:
               mountPath: /app/data
       volumes:
         - name: app-storage
-          emptyDir: {}  # Or use `persistentVolumeClaim` if needed
+          emptyDir: {}
