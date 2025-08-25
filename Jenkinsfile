@@ -12,11 +12,12 @@ pipeline {
     }
 
     stages {
-          stage('Install Python Dependencies') {
+        stage('Install Python Dependencies') {
             steps {
                 sh 'pip install -r requirements.txt'
             }
         }
+
         stage('Build Docker Image') {
             steps {
                 timeout(time: 5, unit: 'MINUTES') {
@@ -48,13 +49,13 @@ pipeline {
                         withSonarQubeEnv('SonarCloud') {
                             withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')]) {
                                 sh '''
-                                    /opt/sonar-scanner/bin/sonar-scanner \
-                                      -Dsonar.projectKey=game-app_demo-app \
-                                      -Dsonar.organization=game-app \
-                                      -Dsonar.sources=. \
-                                      -Dsonar.host.url=https://sonarcloud.io/ \
-                                      -Dsonar.login=$SONAR_TOKEN \
-                                      -Dsonar.python.coverage.reportPaths=coverage.xml
+                                    sonar-scanner \
+                                    -Dsonar.projectKey=game-app_demo-app \
+                                    -Dsonar.organization=game-app \
+                                    -Dsonar.sources=. \
+                                    -Dsonar.host.url=https://sonarcloud.io/ \
+                                    -Dsonar.login=$SONAR_TOKEN \
+                                    -Dsonar.python.coverage.reportPaths=coverage.xml
                                 '''
                             }
                         }
@@ -63,7 +64,7 @@ pipeline {
             }
         }
 
-          stage('Publish Artifacts to JFrog') {
+        stage('Publish Artifacts to JFrog') {
             parallel {
                 stage('Push Docker Image') {
                     steps {
@@ -91,41 +92,16 @@ pipeline {
                 }
             }
         }
-        
-       stage('Deploy to Kubernetes & Smoke Test') {
+
+        stage('Deploy to Kubernetes & Smoke Test') {
             steps {
                 timeout(time: 4, unit: 'MINUTES') {
                     sh '''
                         # Replace image in deployment YAML with the new tag
                         sed "s|IMAGE_PLACEHOLDER|$IMAGE_NAME:$TAG|g" k8s/deployment.yaml > k8s/deploy-temp.yaml
-        
+
                         # Apply deployment (keeps existing service/ingress unchanged)
                         kubectl apply -f k8s/deploy-temp.yaml
-        
+
                         # Restart deployment if same tag is reused (optional but safe)
-                        kubectl rollout restart deployment/python-demo
-        
-                        # Wait for rollout to complete
-                        kubectl rollout status deployment/python-demo
-        
-                        # Smoke test via public URL (Nginx exposed)
-                        echo "Testing http://20.109.16.207:32256/"
-
-                        sleep 10
-                        curl --fail http://20.109.16.207:32256/
-                    '''
-                }
-            }
-        }
-    }
-
-    post {
-        success {
-            echo "🎉 Build, test, and Kubernetes deployment successful!"
-        }
-        failure {
-            echo "❌ Something failed. Check logs."
-        }
-    }
-}
-
+                        kub
