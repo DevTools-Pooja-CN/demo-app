@@ -12,8 +12,6 @@ spec:
       labels:
         app: python-demo
     spec:
-      serviceAccountName: python-demo-sa
-      automountServiceAccountToken: false
       containers:
         - name: python-demo
           image: IMAGE_PLACEHOLDER
