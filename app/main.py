@@ -63,7 +63,7 @@ WELCOME_HTML = '''
 
     <main>
         <div class="card">
-            <h1>🚀 Welcome !</h1>
+            <h1>🚀 Welcome!</h1>
             <p>This Flask app was deployed using a Jenkins pipeline using docker.</p>
         </div>
     </main>
