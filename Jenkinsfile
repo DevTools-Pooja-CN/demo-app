@@ -70,15 +70,17 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'aks-kubeconfig', variable: 'KUBECONFIG_FILE')]) {
                     sh '''
+                        echo "Setting KUBECONFIG..."
                         export KUBECONFIG=$KUBECONFIG_FILE
 
-                        # Replace image placeholder in YAML
+                        echo "Replacing image placeholder..."
                         sed "s|IMAGE_PLACEHOLDER|$IMAGE_NAME:$TAG|g" k8s/deployment.yaml > k8s/deploy-temp.yaml
 
-                        # Apply deployment
+                        echo "Deploying to AKS..."
                         kubectl apply -f k8s/deploy-temp.yaml
+                        kubectl apply -f k8s/service.yaml || true
 
-                        # Wait for rollout
+                        echo "Waiting for rollout to finish..."
                         kubectl rollout status deployment/python-demo
                     '''
                 }
