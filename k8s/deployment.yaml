@@ -18,7 +18,7 @@ spec:
         - name: jfrog-registry-secret
       containers:
         - name: python-demo
-          image: IMAGE_PLACEHOLDER  # NOSONAR
+          image: image: 130.131.164.192:8082/art-docker-local/python-demo:16
           ports:
             - containerPort: 3001
           resources:
