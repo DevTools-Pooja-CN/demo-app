@@ -7,9 +7,7 @@ pipeline {
         JFROG_REPO = "art-docker-local"
         IMAGE_NAME = "${JFROG_REGISTRY}/${JFROG_REPO}/python-demo"
         TAG = "${BUILD_NUMBER}"
-        COVERAGE_FILE = "coverage.xml"
-        COVERAGE_ARTIFACT_PATH = "coverage/coverage-${BUILD_NUMBER}.xml"
-        SONAR_TOKEN= credentials('sonarcloud-token')
+        SONAR_TOKEN = credentials('sonarcloud-token')
     }
 
     stages {
@@ -29,61 +27,40 @@ pipeline {
             }
         }
 
-      stage('Parallel: Unit Tests & Code Quality') {
-                stage('Run Unit Tests') {
-                    steps {
-                        timeout(time: 3, unit: 'MINUTES') {
-                            sh '''
-                                export PATH=$PATH:/var/lib/jenkins/.local/bin
-                                pytest test_app.py
-                            '''
-                        }
-                    }
+        stage('Run Unit Tests') {
+            steps {
+                timeout(time: 3, unit: 'MINUTES') {
+                    sh '''
+                        export PATH=$PATH:/var/lib/jenkins/.local/bin
+                        pytest test_app.py
+                    '''
                 }
-                // Code Quality stage (like SonarCloud) can stay here if you still need it
             }
         }
 
-               stage('SonarCloud Scan') {
-                    steps {
-                        withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')]) {
-                            sh """
-                                sonar-scanner \\
-                                    -Dsonar.projectKey=game-app_demo-app \\
-                                    -Dsonar.organization=game-app \\
-                                    -Dsonar.token=$SONAR_TOKEN \\
-                                    -Dsonar.sources=. \\
-                                    -Dsonar.host.url=https://sonarcloud.io
-                            """
-                        }
-                    }
+        stage('SonarCloud Scan') {
+            steps {
+                withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')]) {
+                    sh """
+                        sonar-scanner \\
+                            -Dsonar.projectKey=game-app_demo-app \\
+                            -Dsonar.organization=game-app \\
+                            -Dsonar.token=$SONAR_TOKEN \\
+                            -Dsonar.sources=. \\
+                            -Dsonar.host.url=https://sonarcloud.io
+                    """
                 }
             }
+        }
 
-        stage('Publish Artifacts to JFrog') {
-            parallel {
-                stage('Push Docker Image') {
-                    steps {
-                        withCredentials([usernamePassword(credentialsId: 'jfrog-cred', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')]) {
-                            timeout(time: 2, unit: 'MINUTES') {
-                                sh '''
-                                    echo "$JFROG_PASS" | docker login $JFROG_REGISTRY -u "$JFROG_USER" --password-stdin
-                                    docker push $IMAGE_NAME:$TAG
-                                '''
-                            }
-                        }
-                    }
-                }
-
-                stage('Upload Coverage Report') {
-                    steps {
-                        withCredentials([usernamePassword(credentialsId: 'jfrog-cred', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')]) {
-                            sh '''
-                                curl -u "$JFROG_USER:$JFROG_PASS" \
-                                  -T coverage.xml \
-                                  "https://$JFROG_REGISTRY/artifactory/$JFROG_REPO/$COVERAGE_ARTIFACT_PATH"
-                            '''
-                        }
+        stage('Push Docker Image to JFrog') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'jfrog-cred', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')]) {
+                    timeout(time: 2, unit: 'MINUTES') {
+                        sh '''
+                            echo "$JFROG_PASS" | docker login $JFROG_REGISTRY -u "$JFROG_USER" --password-stdin
+                            docker push $IMAGE_NAME:$TAG
+                        '''
                     }
                 }
             }
