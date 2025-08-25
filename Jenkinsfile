@@ -64,7 +64,7 @@ pipeline {
         stage('Configure Azure Web App to use Docker Image') {
           steps {
             withCredentials([
-              string(credentialsId: 'publish-profile', variable: 'PUBLISH_PROFILE'),
+              string(credentialsId: 'azure-publish-profile', variable: 'PUBLISH_PROFILE'),
               usernamePassword(credentialsId: 'jfrog-cred', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')
             ]) {
               sh '''
