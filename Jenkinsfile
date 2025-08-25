@@ -90,7 +90,7 @@ pipeline {
                 sh '''
                     echo "Running smoke test..."
                     sleep 10
-                    curl --fail http://<your-service-public-ip>:<port>/ || exit 1
+                    curl --fail http://20.55.91.91/ || exit 1
                 '''
             }
         }
