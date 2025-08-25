@@ -48,15 +48,13 @@ pipeline {
                     steps {
                         withSonarQubeEnv('SonarCloud') {
                             withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')]) {
-                                sh '''
-                                    sonar-scanner \
+                                sh '''sonar-scanner \
                                     -Dsonar.projectKey=game-app_demo-app \
                                     -Dsonar.organization=game-app \
                                     -Dsonar.sources=. \
                                     -Dsonar.host.url=https://sonarcloud.io/ \
                                     -Dsonar.login=$SONAR_TOKEN \
-                                    -Dsonar.python.coverage.reportPaths=coverage.xml
-                                '''
+                                    -Dsonar.python.coverage.reportPaths=coverage.xml'''
                             }
                         }
                     }
@@ -104,4 +102,28 @@ pipeline {
                         kubectl apply -f k8s/deploy-temp.yaml
 
                         # Restart deployment if same tag is reused (optional but safe)
-                        kub
+                        kubectl rollout restart deployment/python-demo
+
+                        # Wait for rollout to complete
+                        kubectl rollout status deployment/python-demo
+
+                        # Smoke test via public URL (Nginx exposed)
+                        echo "Testing http://20.109.16.207:32256/"
+
+                        sleep 10
+                        curl --fail http://20.109.16.207:32256/
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "🎉 Build, test, and Kubernetes deployment successful!"
+        }
+        failure {
+            echo "❌ Something failed. Check logs."
+        }
+    }
+}
