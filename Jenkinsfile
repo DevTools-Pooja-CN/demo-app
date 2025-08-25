@@ -4,7 +4,7 @@ pipeline {
     environment {
         APP_PORT = "3001"
         JFROG_REGISTRY = "130.131.164.192:8082"
-        JFROG_REPO = "art-python-local"
+        JFROG_REPO = "art-docker-local"
         IMAGE_NAME = "${JFROG_REGISTRY}/${JFROG_REPO}/python-demo"
         TAG = "${BUILD_NUMBER}"
         COVERAGE_FILE = "coverage.xml"
