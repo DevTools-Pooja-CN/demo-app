@@ -1,12 +1,13 @@
 pipeline {
     agent any
+
     environment {
-        APP_PORT = "3001"
-        DOCKERHUB_REPO = "poojadocker404/python-demo"
-        TAG = "${BUILD_NUMBER}"
-        SONAR_TOKEN = credentials('sonarcloud-token')
-        AZURE_WEBAPP_NAME = 'python-app1'         // Your Azure Web App name
-        AZURE_RESOURCE_GROUP = 'RG'              // Azure Resource Group
+        APP_PORT        = "3001"
+        JFROG_REGISTRY  = "130.131.164.192:8082"
+        JFROG_REPO      = "art-docker-local"
+        IMAGE_NAME      = "${JFROG_REGISTRY}/${JFROG_REPO}/python-demo"
+        TAG             = "${BUILD_NUMBER}"
+        SONAR_TOKEN     = credentials('sonarcloud-token')
     }
 
     stages {
@@ -20,7 +21,7 @@ pipeline {
             steps {
                 timeout(time: 5, unit: 'MINUTES') {
                     retry(2) {
-                        sh "docker build -t ${DOCKERHUB_REPO}:${TAG} ."
+                        sh 'docker build -t $IMAGE_NAME:$TAG .'
                     }
                 }
             }
@@ -39,68 +40,74 @@ pipeline {
 
         stage('SonarCloud Scan') {
             steps {
-                withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')]) {
+                withCredentials([
+                    string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')
+                ]) {
                     sh """
                         sonar-scanner \\
-                          -Dsonar.projectKey=game-app_demo-app \\
-                          -Dsonar.organization=game-app \\
-                          -Dsonar.token=$SONAR_TOKEN \\
-                          -Dsonar.sources=. \\
-                          -Dsonar.host.url=https://sonarcloud.io
+                            -Dsonar.projectKey=game-app_demo-app \\
+                            -Dsonar.organization=game-app \\
+                            -Dsonar.token=$SONAR_TOKEN \\
+                            -Dsonar.sources=. \\
+                            -Dsonar.host.url=https://sonarcloud.io
                     """
                 }
             }
         }
 
-        stage('Push to Docker Hub') {
+        stage('Push Docker Image to JFrog') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-pat', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([
+                    usernamePassword(credentialsId: 'jfrog-cred', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')
+                ]) {
                     timeout(time: 2, unit: 'MINUTES') {
                         sh '''
-                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                            docker push ${DOCKERHUB_REPO}:${TAG}
+                            echo "$JFROG_PASS" | docker login $JFROG_REGISTRY -u "$JFROG_USER" --password-stdin
+                            docker push $IMAGE_NAME:$TAG
                         '''
                     }
                 }
             }
         }
-
-        stage('Deploy to Azure Web App for Containers') {
+    }
+}
+    stage('Deploy to AKS') {
             steps {
-                withCredentials([
-                  file(credentialsId: 'azure-publish-profile', variable: 'PUBLISH_PROFILE'),
-                  usernamePassword(credentialsId: 'docker-hub-pat', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')
-                ]) {
+                withCredentials([file(credentialsId: 'aks-kubeconfig', variable: 'KUBECONFIG_FILE')]) {
                     sh '''
-                        # Configure the Web App to use the Docker image from Docker Hub
-                        az webapp config container set \
-                          --name $AZURE_WEBAPP_NAME \
-                          --resource-group $AZURE_RESOURCE_GROUP \
-                          --docker-custom-image-name ${DOCKERHUB_REPO}:${TAG} \
-                          --docker-registry-server-url https://index.docker.io \
-                          --docker-registry-server-user $DOCKER_USER \
-                          --docker-registry-server-password $DOCKER_PASS
+                        echo "Setting KUBECONFIG..."
+                        export KUBECONFIG=$KUBECONFIG_FILE
 
-                        # Optionally enable CI/CD so App Service redeploys on new pushes
-                        az webapp deployment container config \
-                          --name $AZURE_WEBAPP_NAME \
-                          --resource-group $AZURE_RESOURCE_GROUP \
-                          --enable-cd true
+                        echo "Replacing image placeholder..."
+                        sed "s|IMAGE_PLACEHOLDER|$IMAGE_NAME:$TAG|g" k8s/deployment.yaml > k8s/deploy-temp.yaml
 
-                        # Restart the app to pull the new image
-                        az webapp restart \
-                          --name $AZURE_WEBAPP_NAME \
-                          --resource-group $AZURE_RESOURCE_GROUP
+                        echo "Deploying to AKS..."
+                        kubectl apply -f k8s/deploy-temp.yaml
+                        kubectl apply -f k8s/service.yaml || true
+
+                        echo "Waiting for rollout to finish..."
+                        kubectl rollout status deployment/python-demo
                     '''
                 }
+            }
+        }
+
+        stage('Smoke Test') {
+            steps {
+                sh '''
+                    echo "Running smoke test..."
+                    sleep 10
+                    curl --fail http://<your-service-public-ip>:<port>/ || exit 1
+                '''
             }
         }
     }
 
     post {
-        always {
-            echo "Cleaning up local Docker image"
-            sh "docker rmi ${DOCKERHUB_REPO}:${TAG} || true"
+        success {
+            echo "✅ Deployed successfully to Azure AKS"
+        }
+        failure {
+            echo "❌ Deployment failed"
         }
     }
-}
