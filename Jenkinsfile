@@ -46,13 +46,13 @@ pipeline {
                 stage('Code Quality - SonarCloud') {
                     steps {
                         withSonarQubeEnv('SonarCloud') {
-                            withCredentials([string(credentialsId: 'sonar-qube-token', variable: 'SONAR_TOKEN')]) {
+                            withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')]) {
                                 sh '''
                                     /opt/sonar-scanner/bin/sonar-scanner \
-                                      -Dsonar.projectKey=CGO-22_demo-app \
-                                      -Dsonar.organization=cgo-22 \
+                                      -Dsonar.projectKey=game-app_demo-app \
+                                      -Dsonar.organization=game-app \
                                       -Dsonar.sources=. \
-                                      -Dsonar.host.url=https://sonarcloud.io \
+                                      -Dsonar.host.url=https://sonarcloud.io/ \
                                       -Dsonar.login=$SONAR_TOKEN \
                                       -Dsonar.python.coverage.reportPaths=coverage.xml
                                 '''
