@@ -9,6 +9,7 @@ pipeline {
         TAG = "${BUILD_NUMBER}"
         COVERAGE_FILE = "coverage.xml"
         COVERAGE_ARTIFACT_PATH = "coverage/coverage-${BUILD_NUMBER}.xml"
+        SONAR_TOKEN= credentials('sonarcloud-token')
     }
 
     stages {
@@ -44,18 +45,17 @@ pipeline {
                     }
                 }
 
-                stage('Code Quality - SonarCloud') {
+               stage('SonarCloud Scan') {
                     steps {
-                        withSonarQubeEnv('SonarCloud') {
-                            withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')]) {
-                                sh '''sonar-scanner \
-                                    -Dsonar.projectKey=game-app_demo-app \
-                                    -Dsonar.organization=game-app \
-                                    -Dsonar.sources=. \
-                                    -Dsonar.host.url=https://sonarcloud.io/ \
-                                    -Dsonar.login=$SONAR_TOKEN \
-                                    -Dsonar.python.coverage.reportPaths=coverage.xml'''
-                            }
+                        withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')]) {
+                            sh '''
+                            sonar-scanner \
+                            -Dsonar.projectKey=game-app_demo-app \
+                            -Dsonar.organization=game-app \
+                            -Dsonar.token=$SONAR_TOKEN \
+                            -Dsonar.sources=. \
+                            -Dsonar.host.url=https://sonarcloud.io
+                            '''
                         }
                     }
                 }
