@@ -102,19 +102,27 @@ pipeline {
             }
         }
 
-        stage('Upload ZAP Report to Azure Blob') {
+    stage('Upload ZAP Report to JFrog Artifactory') {
             steps {
-                withCredentials([string(credentialsId: 'azure-storage-account', variable: 'AZURE_STORAGE_ACCOUNT'),
-                                 string(credentialsId: 'azure-sas-token', variable: 'AZURE_SAS_TOKEN')]) {
+                withCredentials([usernamePassword(credentialsId: 'jfrog-cred', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')]) {
                     sh '''
-                        echo "Uploading ZAP report to Azure Blob Storage..."
-                        azcopy copy "zap_report.html" "https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/zapreports/zap_report-${BUILD_NUMBER}.html${AZURE_SAS_TOKEN}" --overwrite=true
-                        azcopy copy "zap_report.xml" "https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/zapreports/zap_report-${BUILD_NUMBER}.xml${AZURE_SAS_TOKEN}" --overwrite=true
-                        azcopy copy "zap_report.json" "https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/zapreports/zap_report-${BUILD_NUMBER}.json${AZURE_SAS_TOKEN}" --overwrite=true
+                        echo "Installing JFrog CLI..."
+                        curl -fL https://install-cli.jfrog.io | sh
+        
+                        echo "Configuring JFrog CLI..."
+                        ./jfrog config add jfrog-server \
+                            --url=http://130.131.164.192:8082/artifactory \
+                            --user=$JFROG_USER \
+                            --password=$JFROG_PASS \
+                            --interactive=false
+        
+                        echo "Uploading ZAP reports to JFrog Artifactory..."
+                        ./jfrog rt u "zap_report.*" "art-docker-local/zap-reports/${BUILD_NUMBER}/" --server-id=jfrog-server
                     '''
                 }
             }
         }
+
     }
 
     post {
