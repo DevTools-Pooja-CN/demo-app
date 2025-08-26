@@ -69,7 +69,7 @@ WELCOME_HTML = '''
     </main>
 
     <footer>
-        &copy; 2025 Charan_SV DevOps · Powered by Flask & Jenkins
+        &copy; 2025 DevOps · Powered by Flask & Jenkins
     </footer>
 </body>
 </html>
