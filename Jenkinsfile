@@ -91,6 +91,33 @@ pipeline {
                 '''
             }
         }
+
+        stage('OWASP ZAP Scan') {
+            steps {
+                sh '''
+                    echo "Running OWASP ZAP baseline scan..."
+                    docker run --rm -v $(pwd):/zap/wrk/:rw -t owasp/zap2docker-stable zap-baseline.py \
+                        -t http://4.156.43.92:3001 \
+                        -r zap_report.html \
+                        -x zap_report.xml \
+                        -J zap_report.json \
+                        -I
+                '''
+            }
+        }
+
+        stage('Upload ZAP Report to Azure Blob') {
+            environment {
+                AZURE_STORAGE_ACCOUNT = credentials('azure-blob-credentials') // Replace with your Jenkins secret ID
+            }
+            steps {
+                sh '''
+                    echo "Uploading ZAP report to Azure Blob Storage..."
+                    azcopy copy "zap_report.html" "https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/zapreports/zap_report-${BUILD_NUMBER}.html${AZURE_SAS_TOKEN}" --overwrite=true
+                '''
+            }
+        }
+
     }
 
     post {
