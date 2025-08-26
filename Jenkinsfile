@@ -2,12 +2,11 @@ pipeline {
     agent any
 
     environment {
-        APP_PORT        = "3001"
-        JFROG_REGISTRY  = "130.131.164.192:8082"
-        JFROG_REPO      = "art-docker-local"
-        IMAGE_NAME      = "${JFROG_REGISTRY}/${JFROG_REPO}/python-demo"
-        TAG             = "${BUILD_NUMBER}"
-        SONAR_TOKEN     = credentials('sonarcloud-token')
+        APP_PORT     = "3001"
+        DOCKER_USER  = credentials('docker-hub-credentials')  // Jenkins secret
+        IMAGE_NAME   = "poojadocker404/python-demo"
+        TAG          = "${BUILD_NUMBER}"
+        SONAR_TOKEN  = credentials('sonarcloud-token')
     }
 
     stages {
@@ -55,37 +54,22 @@ pipeline {
             }
         }
 
-        stage('Push Docker Image to JFrog') {
+        stage('Push Docker Image to Docker Hub') {
             steps {
                 withCredentials([
-                    usernamePassword(credentialsId: 'jfrog-cred', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')
+                    usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASS')
                 ]) {
                     timeout(time: 2, unit: 'MINUTES') {
                         sh '''
-                            echo "$JFROG_PASS" | docker login $JFROG_REGISTRY -u "$JFROG_USER" --password-stdin
+                            echo "$DOCKER_HUB_PASS" | docker login -u "$DOCKER_HUB_USER" --password-stdin
                             docker push $IMAGE_NAME:$TAG
                         '''
                     }
                 }
             }
         }
-/*
-        stage('Deploy') {
-            steps {
-                sh '''
-                    echo "Stopping and removing existing container (if any)..."
-                    docker rm -f python-demo-container || true
 
-                    echo "Pulling the latest image..."
-                    docker pull $IMAGE_NAME:$TAG
-
-                    echo "Starting new container..."
-                    docker run -d -p 3001:3001 --name python-demo-container $IMAGE_NAME:$TAG
-                '''
-            }
-        }
-*/
-    stage('Deploy to AKS') {
+        stage('Deploy to AKS') {
             steps {
                 sh '''
                     sed "s|IMAGE_PLACEHOLDER|$IMAGE_NAME:$TAG|g" k8s/deployment.yaml > k8s/deploy-temp.yaml
@@ -98,8 +82,6 @@ pipeline {
             }
         }
 
-
-        
         stage('Smoke Test') {
             steps {
                 sh '''
