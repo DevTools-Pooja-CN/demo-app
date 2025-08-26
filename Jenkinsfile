@@ -106,9 +106,17 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'jfrog-cred', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')]) {
                     sh '''
-                        echo "Downloading JFrog CLI (no sudo)..."
-                        curl -fL https://install-cli.jfrog.io | sh
+                        echo "Downloading JFrog CLI binary..."
+                        curl -fL https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/latest/jfrog-cli-linux-amd64/jf -o jf
+                        if [ $? -ne 0 ]; then
+                          echo "ERROR: Failed to download JFrog CLI"
+                          exit 1
+                        fi
+
                         chmod +x jf
+
+                        echo "JFrog CLI version:"
+                        ./jf --version
 
                         echo "Configuring JFrog CLI..."
                         ./jf config add jfrog-server \
@@ -118,7 +126,7 @@ pipeline {
                             --interactive=false
 
                         echo "Uploading ZAP reports to JFrog Artifactory..."
-                        jf rt upload "zap_report.*" "art-docker-local/zap-reports/${BUILD_NUMBER}/" --server-id=jfrog-server
+                        ./jf rt upload "zap_report.*" "art-docker-local/zap-reports/${BUILD_NUMBER}/" --server-id=jfrog-server
                     '''
                 }
             }
