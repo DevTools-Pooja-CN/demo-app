@@ -118,7 +118,7 @@ pipeline {
                             --interactive=false
 
                         echo "Uploading ZAP reports to JFrog Artifactory..."
-                        ./jf rt upload "zap_report.*" "art-docker-local/zap-reports/${BUILD_NUMBER}/" --server-id=jfrog-server
+                        jf rt upload "zap_report.*" "art-docker-local/zap-reports/${BUILD_NUMBER}/" --server-id=jfrog-server
                     '''
                 }
             }
