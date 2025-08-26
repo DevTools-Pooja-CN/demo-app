@@ -118,38 +118,44 @@ pipeline {
     }
 
     post {
-        failure {
-            script {
-                echo "❌ Build failed! Creating GitHub issue and notifying developer..."
+    failure {
+        script {
+            echo "❌ Build failed! Creating GitHub issue and notifying developer..."
 
-                def issueTitle = "🚨 Jenkins Build Failed - Job: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-                def issueBody = """The Jenkins build has failed.
+            def issueTitle = "🚨 Jenkins Build Failed - Job: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+            def issueBody = """
+The Jenkins build has failed.
 
-*Job:* ${env.JOB_NAME}
-*Build Number:* ${env.BUILD_NUMBER}
-*URL:* ${env.BUILD_URL}
+*Job:* ${env.JOB_NAME}  
+*Build Number:* ${env.BUILD_NUMBER}  
+*URL:* ${env.BUILD_URL}  
 
 Please investigate the issue.
 
--- Jenkins Bot"""
+-- Jenkins Bot
+"""
 
-                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-                    sh """
-                        curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
-                             -H "Accept: application/vnd.github+json" \
-                             https://api.github.com/repos/${GITHUB_REPO}/issues \
-                             -d '{ 
-                                   "title": "${issueTitle}", 
-                                   "body": "${issueBody.replaceAll('"','\\\\\"')}", 
-                                   "assignees": ["${ISSUE_ASSIGNEE}"] 
-                                 }'
-                    """
-                }
-
-                mail to: 'poojan@devtools.in',
-                     subject: "❌ Jenkins Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                     body: "The build failed. Check the details at: ${env.BUILD_URL}"
+            withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                writeFile file: 'issue.json', text: groovy.json.JsonOutput.toJson([
+                    title    : issueTitle,
+                    body     : issueBody,
+                    assignees: ["${ISSUE_ASSIGNEE}"]
+                ])
+                sh 'curl -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/$GITHUB_REPO/issues -d @issue.json'
             }
+
+            // ✅ Email Notification (assumes email plugin is configured)
+            mail to: 'poojan@devtools.in',
+                 subject: "❌ Jenkins Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: """The build failed.
+
+Job: ${env.JOB_NAME}
+Build: ${env.BUILD_NUMBER}
+URL: ${env.BUILD_URL}
+
+Please investigate.
+"""
         }
     }
+}
 }
