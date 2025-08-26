@@ -93,8 +93,11 @@ pipeline {
         stage('OWASP ZAP Scan') {
             steps {
                 sh '''
-                    echo "Running OWASP ZAP baseline scan..."
-                    zap-baseline.py -t http://4.156.43.92:$APP_PORT -r zap_report.html -x zap_report.xml -J zap_report.json -I
+                    echo "Running OWASP ZAP baseline scan using Docker..."
+
+                    docker run --rm -v $PWD:/zap/wrk/:rw -t softwaresecurityproject/zap-stable zap-baseline.py \
+                        -t http://4.156.43.92:$APP_PORT \
+                        -r zap_report.html -x zap_report.xml -J zap_report.json -I
                 '''
             }
         }
