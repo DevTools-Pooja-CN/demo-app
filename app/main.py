@@ -13,13 +13,13 @@ WELCOME_HTML = '''
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>🚀 Jenkins Python App</title>
+    <title>🚀 Welcome to DevTools</title>
     <style>
         body {
             margin: 0;
             padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: radial-gradient(circle at top right, #1abc9c, #3498db);
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
             color: #fff;
             height: 100vh;
             display: flex;
@@ -44,15 +44,16 @@ WELCOME_HTML = '''
             animation: fadeIn 2s ease-in-out;
         }
 
-         .card {
+        .card {
             background-color: #7A67EE; /* lavender4 */
             padding: 50px;
             border-radius: 20px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
             text-align: center;
-            max-width: 600px;
-            color: white; /* Ensure text is readable */
+            max-width: 650px;
+            transition: transform 0.3s ease;
         }
+
         .card:hover {
             transform: translateY(-5px);
         }
@@ -82,19 +83,18 @@ WELCOME_HTML = '''
 </head>
 <body>
     <header>
-        🔧 Jenkins Python App
+        🛠️ Welcome to DevTools
     </header>
 
     <main>
         <div class="card">
-            <h1>Welcome 👋</h1>
-            <p>This sleek Flask app was <strong>built and deployed</strong> using a fully automated Jenkins pipeline with Docker & AKS.</p>
-            <p>Happy DevOps-ing! 🛠️</p>
+            <h1>Hello DevOps Enthusiast! 👋</h1>
+            <p>DevTools is a leading consulting, licensing and managed services organization dedicated to <strong>DevSecOps</strong> with focus on <strong>Automation</strong> across all platforms.</p>
         </div>
     </main>
 
     <footer>
-        &copy; 2025 DevOps Team · Flask · Jenkins · Docker · AKS
+        &copy; 2025 DevTools • Built with Flask, Jenkins, Docker & AKS
     </footer>
 </body>
 </html>
