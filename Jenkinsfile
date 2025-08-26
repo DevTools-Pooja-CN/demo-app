@@ -106,18 +106,18 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'jfrog-cred', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')]) {
                     sh '''
-                        echo "Installing JFrog CLI..."
+                        echo "Installing JFrog CLI locally..."
                         curl -fL https://install-cli.jfrog.io | sh
         
                         echo "Configuring JFrog CLI..."
-                        ./jfrog config add jfrog-server \
+                        ./jf config add jfrog-server \
                             --url=http://130.131.164.192:8082/artifactory \
                             --user=$JFROG_USER \
                             --password=$JFROG_PASS \
                             --interactive=false
         
                         echo "Uploading ZAP reports to JFrog Artifactory..."
-                        ./jfrog rt u "zap_report.*" "art-docker-local/zap-reports/${BUILD_NUMBER}/" --server-id=jfrog-server
+                        ./jf rt u "zap_report.*" "art-docker-local/zap-reports/${BUILD_NUMBER}/" --server-id=jfrog-server
                     '''
                 }
             }
