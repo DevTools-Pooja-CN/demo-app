@@ -2,13 +2,16 @@ pipeline {
     agent any
 
     environment {
-        APP_PORT             = "3001"
-        DOCKER_CREDENTIALS   = 'docker-hub-credentials'  // Jenkins credential ID for Docker Hub (username/password)
-        IMAGE_NAME           = "poojadocker404/python-demo"
-        TAG                  = "${BUILD_NUMBER}"
-        SONAR_TOKEN          = credentials('sonarcloud-token')
-        AZURE_STORAGE_ACCOUNT = credentials('azure-storage-account')    // Jenkins secret ID for storage account name
-        AZURE_SAS_TOKEN      = credentials('azure-sas-token')           // Jenkins secret ID for SAS token
+        APP_PORT              = "3001"
+        DOCKER_CREDENTIALS    = 'docker-hub-credentials'
+        IMAGE_NAME            = "poojadocker404/python-demo"
+        TAG                   = "${BUILD_NUMBER}"
+        SONAR_TOKEN           = credentials('sonarcloud-token')
+        AZURE_STORAGE_ACCOUNT = credentials('azure-storage-account')
+        AZURE_SAS_TOKEN       = credentials('azure-sas-token')
+        GITHUB_TOKEN          = credentials('github-token') // GitHub personal access token (repo scope)
+        GITHUB_REPO           = "DevTools-Pooja-CN/demo-app" // Your GitHub repo (org/repo or user/repo)
+        ISSUE_ASSIGNEE        = "Pooja-DevTools"            // GitHub username to assign the issue to
     }
 
     stages {
@@ -112,15 +115,41 @@ pipeline {
                 }
             }
         }
-
     }
 
     post {
-        success {
-            echo "✅ Deployed successfully to Azure AKS"
-        }
         failure {
-            echo "❌ Deployment failed"
+            script {
+                echo "❌ Build failed! Creating GitHub issue and notifying developer..."
+
+                def issueTitle = "🚨 Jenkins Build Failed - Job: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+                def issueBody = """The Jenkins build has failed.
+
+*Job:* ${env.JOB_NAME}
+*Build Number:* ${env.BUILD_NUMBER}
+*URL:* ${env.BUILD_URL}
+
+Please investigate the issue.
+
+-- Jenkins Bot"""
+
+                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                    sh """
+                        curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
+                             -H "Accept: application/vnd.github+json" \
+                             https://api.github.com/repos/${GITHUB_REPO}/issues \
+                             -d '{ 
+                                   "title": "${issueTitle}", 
+                                   "body": "${issueBody.replaceAll('"','\\\\\"')}", 
+                                   "assignees": ["${ISSUE_ASSIGNEE}"] 
+                                 }'
+                    """
+                }
+
+                mail to: 'poojan@devtools.in',
+                     subject: "❌ Jenkins Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                     body: "The build failed. Check the details at: ${env.BUILD_URL}"
+            }
         }
     }
 }
