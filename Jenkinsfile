@@ -94,17 +94,21 @@ pipeline {
 
         stage('OWASP ZAP Scan') {
             steps {
-                sh '''
-                    echo "Running OWASP ZAP baseline scan..."
-                    docker run --rm -v $(pwd):/zap/wrk/:rw -t owasp/zap2docker-stable zap-baseline.py \
-                        -t http://4.156.43.92:3001 \
-                        -r zap_report.html \
-                        -x zap_report.xml \
-                        -J zap_report.json \
-                        -I
-                '''
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        echo "Running OWASP ZAP baseline scan..."
+                        docker run --rm -v $(pwd):/zap/wrk/:rw -t owasp/zap2docker-stable zap-baseline.py \
+                            -t http://4.156.43.92:3001 \
+                            -r zap_report.html \
+                            -x zap_report.xml \
+                            -J zap_report.json \
+                            -I
+                    '''
+                }
             }
         }
+
 
         stage('Upload ZAP Report to Azure Blob') {
             environment {
