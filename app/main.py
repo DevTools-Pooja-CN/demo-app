@@ -19,7 +19,7 @@ WELCOME_HTML = '''
             margin: 0;
             padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            background: #000;
             color: #fff;
             height: 100vh;
             display: flex;
