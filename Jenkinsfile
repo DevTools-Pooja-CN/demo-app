@@ -4,9 +4,12 @@ pipeline {
     environment {
         APP_PORT     = "3001"
         DOCKER_USER  = credentials('docker-hub-credentials')  // Jenkins secret ID
+        DOCKER_PASS  = credentials('docker-hub-password')     // Add if you have separate password
         IMAGE_NAME   = "poojadocker404/python-demo"
         TAG          = "${BUILD_NUMBER}"
         SONAR_TOKEN  = credentials('sonarcloud-token')
+        AZURE_STORAGE_ACCOUNT = credentials('azure-storage-account')    // Jenkins secret ID for storage account name
+        AZURE_SAS_TOKEN      = credentials('azure-sas-token')           // Jenkins secret ID for SAS token
     }
 
     stages {
@@ -29,9 +32,7 @@ pipeline {
 
         stage('SonarCloud Scan') {
             steps {
-                withCredentials([
-                    string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')
-                ]) {
+                withCredentials([string(credentialsId: 'sonarcloud-token', variable: 'SONAR_TOKEN')]) {
                     sh """
                         sonar-scanner \\
                             -Dsonar.projectKey=game-app_demo-app \\
@@ -56,12 +57,10 @@ pipeline {
 
         stage('Push Docker Image to Docker Hub') {
             steps {
-                withCredentials([
-                    usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASS')
-                ]) {
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     timeout(time: 2, unit: 'MINUTES') {
                         sh '''
-                            echo "$DOCKER_HUB_PASS" | docker login -u "$DOCKER_HUB_USER" --password-stdin
+                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                             docker push $IMAGE_NAME:$TAG
                         '''
                     }
@@ -87,41 +86,33 @@ pipeline {
                 sh '''
                     echo "Running smoke test..."
                     sleep 10
-                    curl --fail http://4.156.43.92:3001 || exit 1
+                    curl --fail http://4.156.43.92:$APP_PORT || exit 1
                 '''
             }
         }
 
         stage('OWASP ZAP Scan') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        echo "Running OWASP ZAP baseline scan..."
-                        docker run --rm -v $(pwd):/zap/wrk/:rw -t owasp/zap2docker-stable zap-baseline.py \
-                            -t http://4.156.43.92:3001 \
-                            -r zap_report.html \
-                            -x zap_report.xml \
-                            -J zap_report.json \
-                            -I
-                    '''
-                }
-            }
-        }
-
-
-        stage('Upload ZAP Report to Azure Blob') {
-            environment {
-                AZURE_STORAGE_ACCOUNT = credentials('azure-blob-credentials') // Replace with your Jenkins secret ID
-            }
-            steps {
                 sh '''
-                    echo "Uploading ZAP report to Azure Blob Storage..."
-                    azcopy copy "zap_report.html" "https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/zapreports/zap_report-${BUILD_NUMBER}.html${AZURE_SAS_TOKEN}" --overwrite=true
+                    echo "Running OWASP ZAP baseline scan..."
+                    zap-baseline.py -t http://4.156.43.92:$APP_PORT -r zap_report.html -x zap_report.xml -J zap_report.json -I
                 '''
             }
         }
 
+        stage('Upload ZAP Report to Azure Blob') {
+            steps {
+                withCredentials([string(credentialsId: 'azure-storage-account', variable: 'AZURE_STORAGE_ACCOUNT'),
+                                 string(credentialsId: 'azure-sas-token', variable: 'AZURE_SAS_TOKEN')]) {
+                    sh '''
+                        echo "Uploading ZAP report to Azure Blob Storage..."
+                        azcopy copy "zap_report.html" "https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/zapreports/zap_report-${BUILD_NUMBER}.html${AZURE_SAS_TOKEN}" --overwrite=true
+                        azcopy copy "zap_report.xml" "https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/zapreports/zap_report-${BUILD_NUMBER}.xml${AZURE_SAS_TOKEN}" --overwrite=true
+                        azcopy copy "zap_report.json" "https://${AZURE_STORAGE_ACCOUNT}.blob.core.windows.net/zapreports/zap_report-${BUILD_NUMBER}.json${AZURE_SAS_TOKEN}" --overwrite=true
+                    '''
+                }
+            }
+        }
     }
 
     post {
