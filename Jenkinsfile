@@ -2,12 +2,11 @@ pipeline {
     agent any
 
     environment {
-        APP_PORT     = "3001"
-        DOCKER_USER  = credentials('docker-hub-credentials')  // Jenkins secret ID
-        DOCKER_PASS  = credentials('docker-hub-password')     // Add if you have separate password
-        IMAGE_NAME   = "poojadocker404/python-demo"
-        TAG          = "${BUILD_NUMBER}"
-        SONAR_TOKEN  = credentials('sonarcloud-token')
+        APP_PORT             = "3001"
+        DOCKER_CREDENTIALS   = 'docker-hub-credentials'  // Jenkins credential ID for Docker Hub (username/password)
+        IMAGE_NAME           = "poojadocker404/python-demo"
+        TAG                  = "${BUILD_NUMBER}"
+        SONAR_TOKEN          = credentials('sonarcloud-token')
         AZURE_STORAGE_ACCOUNT = credentials('azure-storage-account')    // Jenkins secret ID for storage account name
         AZURE_SAS_TOKEN      = credentials('azure-sas-token')           // Jenkins secret ID for SAS token
     }
@@ -57,7 +56,7 @@ pipeline {
 
         stage('Push Docker Image to Docker Hub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     timeout(time: 2, unit: 'MINUTES') {
                         sh '''
                             echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
