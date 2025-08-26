@@ -4,9 +4,8 @@ from prometheus_flask_exporter import PrometheusMetrics
 import os
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "fallback-secret")  # Required for CSRF (should be kept safe in production)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "fallback-secret")
 metrics = PrometheusMetrics(app)
-# Enable CSRF protection
 csrf = CSRFProtect(app)
 
 WELCOME_HTML = '''
@@ -14,24 +13,27 @@ WELCOME_HTML = '''
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Welcome to Jenkins-Python App</title>
+    <title>🚀 Jenkins Python App</title>
     <style>
         body {
             margin: 0;
+            padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1abc9c, #3498db);
-            color: white;
-            min-height: 100vh;
+            background: radial-gradient(circle at top right, #1abc9c, #3498db);
+            color: #fff;
+            height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
         header {
-            background-color: rgba(0, 0, 0, 0.2);
-            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px 0;
             text-align: center;
-            font-size: 2em;
-            font-weight: bold;
+            font-size: 2.5em;
+            font-weight: 600;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
         main {
@@ -39,20 +41,43 @@ WELCOME_HTML = '''
             display: flex;
             align-items: center;
             justify-content: center;
+            animation: fadeIn 2s ease-in-out;
         }
 
         .card {
-            background-color: rgba(255, 255, 255, 0.1);
-            padding: 40px;
-            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 50px;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
             text-align: center;
+            max-width: 600px;
+            transition: transform 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 1.2em;
+            line-height: 1.6;
         }
 
         footer {
-            background-color: rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.2);
             text-align: center;
             padding: 15px;
             font-size: 0.9em;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -63,13 +88,14 @@ WELCOME_HTML = '''
 
     <main>
         <div class="card">
-            <h1>🚀 Welcome!</h1>
-            <p>This Flask app was deployed using a Jenkins pipeline using docker.</p>
+            <h1>Welcome 👋</h1>
+            <p>This sleek Flask app was <strong>built and deployed</strong> using a fully automated Jenkins pipeline with Docker & AKS.</p>
+            <p>Happy DevOps-ing! 🛠️</p>
         </div>
     </main>
 
     <footer>
-        &copy; 2025 DevOps · Powered by Flask & Jenkins
+        &copy; 2025 DevOps Team · Flask · Jenkins · Docker · AKS
     </footer>
 </body>
 </html>
