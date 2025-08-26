@@ -105,29 +105,10 @@ pipeline {
         stage('Upload ZAP Report to JFrog Artifactory') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'jfrog-cred', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')]) {
-                    sh '''
-                        echo "Downloading JFrog CLI binary..."
-                        curl -fL https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/linux-amd64/jfrog -o jf
-                        if [ $? -ne 0 ]; then
-                          echo "ERROR: Failed to download JFrog CLI"
-                          exit 1
-                        fi
-        
-                        chmod +x jf
-        
-                        echo "JFrog CLI version:"
-                        ./jf --version
-        
-                        echo "Configuring JFrog CLI..."
-                        ./jf config add jfrog-server \
-                            --url=http://130.131.164.192:8082/artifactory \
-                            --user=$JFROG_USER \
-                            --password=$JFROG_PASS \
-                            --interactive=false
-        
-                        echo "Uploading ZAP reports to JFrog Artifactory..."
-                        ./jf rt upload "zap_report.*" "art-docker-local/zap-reports/${BUILD_NUMBER}/" --server-id=jfrog-server
-                    '''
+                    sh """
+                        jf c add my-jfrog-server --url http://130.131.164.192:8082 --user $JFROG_USER --password $JFROG_PASS --interactive=false
+                        jf rt upload "zap_report.*" "art-docker-local/zap-reports/${BUILD_NUMBER}/" --server-id=my-jfrog-server
+                    """
                 }
             }
         }
