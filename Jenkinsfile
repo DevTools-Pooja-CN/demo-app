@@ -87,7 +87,7 @@ pipeline {
                 sh '''
                     echo "Running smoke test..."
                     sleep 10
-                    curl --fail http://20.55.91.91/ || exit 1
+                    curl --fail http://4.156.43.92:3001 || exit 1
                 '''
             }
         }
