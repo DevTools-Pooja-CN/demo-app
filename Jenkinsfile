@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         APP_PORT     = "3001"
-        DOCKER_USER  = credentials('docker-hub-credentials')  // Jenkins secret
+        DOCKER_USER  = credentials('docker-hub-credentials')  // Jenkins secret ID
         IMAGE_NAME   = "poojadocker404/python-demo"
         TAG          = "${BUILD_NUMBER}"
         SONAR_TOKEN  = credentials('sonarcloud-token')
@@ -13,16 +13,6 @@ pipeline {
         stage('Install Python Dependencies') {
             steps {
                 sh 'pip install -r requirements.txt'
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    retry(2) {
-                        sh 'docker build -t $IMAGE_NAME:$TAG .'
-                    }
-                }
             }
         }
 
@@ -50,6 +40,16 @@ pipeline {
                             -Dsonar.sources=. \\
                             -Dsonar.host.url=https://sonarcloud.io
                     """
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    retry(2) {
+                        sh 'docker build -t $IMAGE_NAME:$TAG .'
+                    }
                 }
             }
         }
