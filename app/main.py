@@ -44,16 +44,15 @@ WELCOME_HTML = '''
             animation: fadeIn 2s ease-in-out;
         }
 
-        .card {
-            background: rgba(255, 255, 255, 0.1);
+         .card {
+            background-color: #7A67EE; /* lavender4 */
             padding: 50px;
             border-radius: 20px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
             text-align: center;
             max-width: 600px;
-            transition: transform 0.3s;
+            color: white; /* Ensure text is readable */
         }
-
         .card:hover {
             transform: translateY(-5px);
         }
