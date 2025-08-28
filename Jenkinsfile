@@ -7,8 +7,6 @@ pipeline {
         IMAGE_NAME            = "poojadocker404/python-demo"
         TAG                   = "${BUILD_NUMBER}"
         SONAR_TOKEN           = credentials('sonarcloud-token')
-        AZURE_STORAGE_ACCOUNT = credentials('azure-storage-account')
-        AZURE_SAS_TOKEN       = credentials('azure-sas-token')
         GITHUB_TOKEN          = credentials('github-token') // GitHub personal access token (repo scope)
         GITHUB_REPO           = "DevTools-Pooja-CN/demo-app" // Your GitHub repo (org/repo or user/repo)
         ISSUE_ASSIGNEE        = "Pooja-DevTools"            // GitHub username to assign the issue to
