@@ -120,9 +120,9 @@ pipeline {
     post {
     failure {
         script {
-            echo "❌ Build failed! Creating GitHub issue and notifying developer..."
+            echo "Build failed! Creating GitHub issue and notifying developer..."
 
-            def issueTitle = "🚨 Jenkins Build Failed - Job: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+            def issueTitle = "Jenkins Build Failed - Job: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
             def issueBody = """
 The Jenkins build has failed.
 
@@ -144,9 +144,9 @@ Please investigate the issue.
                 sh 'curl -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/$GITHUB_REPO/issues -d @issue.json'
             }
 
-            // ✅ Email Notification (assumes email plugin is configured)
+            // Email Notification (assumes email plugin is configured)
             mail to: 'poojan@devtools.in',
-                 subject: "❌ Jenkins Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 subject: "Jenkins Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                  body: """The build failed.
 
 Job: ${env.JOB_NAME}
