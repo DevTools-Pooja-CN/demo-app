@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: python-demo
-          image: IMAGE_PLACEHOLDER
+          image: poojadocker404/python-demo
           ports:
             - containerPort: 3001
           resources:
