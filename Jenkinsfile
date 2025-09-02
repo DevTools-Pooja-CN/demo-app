@@ -123,7 +123,7 @@ pipeline {
                     )
                 ]) {
                     sh """
-                        jf c add my-jfrog-server --url http://130.131.164.192:8082 --user $JFROG_USER --password $JFROG_PASS --interactive=false
+                        jf c add dev-artifactory --url http://130.131.164.192:8082 --user $JFROG_USER --password $JFROG_PASS --interactive=false
                         jf rt upload "zap_report.*" "art-docker-local/zap-reports/${BUILD_NUMBER}/" --server-id=my-jfrog-server
                     """
                 }
