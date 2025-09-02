@@ -96,7 +96,7 @@ pipeline {
                 sh '''
                     echo "Running smoke test..."
                     sleep 10
-                    curl --fail http://4.156.43.92:$APP_PORT || exit 1
+                    curl --fail http://20.75.201.218:$APP_PORT || exit 1
                 '''
             }
         }
@@ -107,7 +107,7 @@ pipeline {
                     echo "Running OWASP ZAP baseline scan using Docker..."
 
                     docker run --rm --user root -v $PWD:/zap/wrk/:rw -t zaproxy/zap-stable zap-baseline.py \
-                        -t http://4.156.43.92:$APP_PORT \
+                        -t http://20.75.201.218:$APP_PORT \
                         -r zap_report.html -x zap_report.xml -J zap_report.json -I
                 '''
             }
