@@ -1,0 +1,59 @@
+trigger:
+- main
+
+variables:
+  IMAGE_NAME: poojadocker404/python-demo
+  TAG: $(Build.BuildId)
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+
+# =========================
+# 1️⃣ Install & Test Stage
+# =========================
+- stage: Build_Test
+  displayName: Build and Test
+  jobs:
+  - job: Test
+    displayName: Install and Run Tests
+    steps:
+
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.12'
+      displayName: Use Python 3.12
+
+    - script: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+      displayName: Install Dependencies
+
+    - script: |
+        pytest test_app.py
+      displayName: Run Unit Tests
+
+
+# =========================
+# 2️⃣ Docker Build & Push
+# =========================
+- stage: Docker_Build_Push
+  displayName: Build and Push Docker Image
+  dependsOn: Build_Test
+  condition: succeeded()
+  jobs:
+  - job: BuildPush
+    displayName: Build and Push to Docker Hub
+    steps:
+
+    - task: Docker@2
+      displayName: Build and Push Image
+      inputs:
+        containerRegistry: 'Docker connection'   # <-- YOUR ACTUAL NAME
+        repository: '$(IMAGE_NAME)'
+        command: 'buildAndPush'
+        Dockerfile: '**/Dockerfile'
+        tags: |
+          $(TAG)
+          latest
