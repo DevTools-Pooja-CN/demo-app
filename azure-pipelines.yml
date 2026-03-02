@@ -1,59 +1,51 @@
 trigger:
-- main
+  branches:
+    include:
+      - main
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  IMAGE_NAME: poojadocker404/python-demo
-  TAG: $(Build.BuildId)
+  imageName: 'poojadocker404/python-demo'
+  tag: '$(Build.BuildId)'
 
 stages:
 
-# =========================
-# 1️⃣ Build & Test Stage
-# =========================
-- stage: Build_Test
-  displayName: Build and Test
+- stage: BuildAndTest
+  displayName: "Install and Run Tests"
   jobs:
   - job: Test
-    displayName: Install and Run Tests
     steps:
 
     - task: UsePythonVersion@0
-      displayName: Use Python 3.12
       inputs:
         versionSpec: '3.12'
+      displayName: "Use Python 3.12"
 
     - script: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-      displayName: Install Dependencies
+      displayName: "Install dependencies"
 
     - script: |
+        pip install pytest
         pytest test_app.py
-      displayName: Run Unit Tests
+      displayName: "Run unit tests"
 
-
-# =========================
-# 2️⃣ Docker Build & Push
-# =========================
-- stage: Docker_Build_Push
-  displayName: Build and Push Docker Image
-  dependsOn: Build_Test
-  condition: succeeded()
+- stage: BuildAndPush
+  displayName: "Build and Push Docker Image"
+  dependsOn: BuildAndTest
   jobs:
-  - job: BuildPush
-    displayName: Build and Push to Docker Hub
+  - job: DockerBuild
     steps:
 
     - task: Docker@2
-      displayName: Build and Push Image
+      displayName: "Build and Push Image"
       inputs:
         containerRegistry: 'docker-hub-connection'
         repository: 'poojadocker404/python-demo'
         command: 'buildAndPush'
-        Dockerfile: 'Dockerfile'
+        Dockerfile: '**/Dockerfile'
         tags: |
-          $(Build.BuildId)
-          latest
+          $(tag)
