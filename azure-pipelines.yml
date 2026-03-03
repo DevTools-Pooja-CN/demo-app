@@ -3,21 +3,23 @@ trigger:
     include:
       - main
 
+
 pool:
-  vmImage: 'Default'
+  name: 'Default' 
 
 variables:
   imageName: 'poojadocker404/python-demo'
   tag: '$(Build.BuildId)'
 
 stages:
-
 - stage: BuildAndTest
   displayName: "Install and Run Tests"
   jobs:
   - job: Test
     steps:
-
+    # NOTE: UsePythonVersion might fail on a local agent if Python isn't 
+    # in the expected directory. If it fails, just ensure Python 3.12 
+    # is installed on your laptop and in your System PATH.
     - task: UsePythonVersion@0
       inputs:
         versionSpec: '3.12'
@@ -39,7 +41,6 @@ stages:
   jobs:
   - job: DockerBuild
     steps:
-
     - task: Docker@2
       displayName: "Build and Push Image"
       inputs:
