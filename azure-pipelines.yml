@@ -3,7 +3,7 @@ trigger:
     include:
       - main
 
-
+# Points to your laptop
 pool:
   name: 'Default' 
 
@@ -12,20 +12,15 @@ variables:
   tag: '$(Build.BuildId)'
 
 stages:
+
 - stage: BuildAndTest
   displayName: "Install and Run Tests"
   jobs:
   - job: Test
     steps:
-    # NOTE: UsePythonVersion might fail on a local agent if Python isn't 
-    # in the expected directory. If it fails, just ensure Python 3.12 
-    # is installed on your laptop and in your System PATH.
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.12'
-      displayName: "Use Python 3.12"
-
+    # We use a standard script instead of the Python Task to avoid Admin prompts
     - script: |
+        python --version
         python -m pip install --upgrade pip
         pip install -r requirements.txt
       displayName: "Install dependencies"
@@ -41,6 +36,7 @@ stages:
   jobs:
   - job: DockerBuild
     steps:
+    # Ensure Docker Desktop is RUNNING on your laptop before this starts
     - task: Docker@2
       displayName: "Build and Push Image"
       inputs:
