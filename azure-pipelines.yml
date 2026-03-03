@@ -3,7 +3,7 @@ trigger:
     include:
       - main
 
-# Points to your laptop
+# Use your laptop's agent pool
 pool:
   name: 'Default' 
 
@@ -13,36 +13,37 @@ variables:
 
 stages:
 
+# STAGE 1: Testing
 - stage: BuildAndTest
   displayName: "Install and Run Tests"
   jobs:
   - job: Test
     steps:
-    # We use a standard script instead of the Python Task to avoid Admin prompts
     - script: |
         python --version
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        python -m pip install pytest
       displayName: "Install dependencies"
 
     - script: |
-        pip install pytest
-        pytest test_app.py
+        python -m pytest test_app.py
       displayName: "Run unit tests"
 
+# STAGE 2: Docker Build and Push
 - stage: BuildAndPush
   displayName: "Build and Push Docker Image"
   dependsOn: BuildAndTest
   jobs:
   - job: DockerBuild
     steps:
-    # Ensure Docker Desktop is RUNNING on your laptop before this starts
     - task: Docker@2
-      displayName: "Build and Push Image"
+      displayName: "Build and Push Image to Docker Hub"
       inputs:
-        containerRegistry: 'docker-hub-connection'
+        containerRegistry: 'docker-hub-connection' # Must match your Service Connection name
         repository: 'poojadocker404/python-demo'
         command: 'buildAndPush'
         Dockerfile: '**/Dockerfile'
         tags: |
           $(tag)
+          latest
